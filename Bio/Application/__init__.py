@@ -26,7 +26,9 @@ import os
 import platform
 import sys
 import subprocess
+import shlex
 import re
+
 
 from subprocess import CalledProcessError as _ProcessCalledError
 
@@ -481,14 +483,18 @@ class AbstractCommandline(object):
         # Windows 7, 8 and 8.1 want shell = True
         # TODO: Test under Windows 10 and revisit platform detection.
         if sys.platform != "win32":
-            use_shell = True
+            use_shell = False
         else:
             win_ver = platform.win32_ver()[0]
             if win_ver in ["7", "8", "post2012Server"]:
                 use_shell = True
             else:
                 use_shell = False
-        child_process = subprocess.Popen(str(self), stdin=subprocess.PIPE,
+        
+        #Formulate command according to the use of the shell
+        command_args = str(self) if use_shell else shlex.split(str(self))
+        
+        child_process = subprocess.Popen(command_args, stdin=subprocess.PIPE,
                                          stdout=stdout_arg, stderr=stderr_arg,
                                          universal_newlines=True,
                                          cwd=cwd, env=env,
